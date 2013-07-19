@@ -10,6 +10,10 @@
 *.dll
 *.dylib
 
+# ICElib
+
+*.ckret
+
 # Qt-es
 
 *.pro.user
