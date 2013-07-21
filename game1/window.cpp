@@ -49,14 +49,7 @@ Window::Window()
 
     for (int i = 0; i < NumRows; ++i) {
         for (int j = 0; j < NumColumns; ++j) {
-            QColor clearColor;
-            clearColor.setHsv(((i * NumColumns) + j) * 255
-                              / (NumRows * NumColumns - 1),
-                              255, 63);
-
             glWidgets[i][j] = new GLWidget(0, 0);
-            glWidgets[i][j]->setClearColor(clearColor);
-            glWidgets[i][j]->rotateBy(+42 * 16, +42 * 16, -21 * 16);
             mainLayout->addWidget(glWidgets[i][j], i, j);
 
             connect(glWidgets[i][j], SIGNAL(clicked()),
@@ -73,9 +66,72 @@ Window::Window()
 
     setWindowTitle(tr("Sleep Dream Games"));
 
-    QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    shortcut(QKeySequence(Qt::Key_Escape), SLOT(keyHandleWM()));
+    shortcut(QKeySequence(Qt::Key_Tab), SLOT(keyHandleWP()));
+
+    shortcut(QKeySequence(Qt::Key_Space), SLOT(keyHandleXM()));
+    shortcut(QKeySequence(Qt::Key_Enter), SLOT(keyHandleXP()));
+
+    shortcut(QKeySequence(Qt::Key_Up), SLOT(keyHandleYM()));
+    shortcut(QKeySequence(Qt::Key_Down), SLOT(keyHandleYP()));
+
+    shortcut(QKeySequence(Qt::Key_Left), SLOT(keyHandleZM()));
+    shortcut(QKeySequence(Qt::Key_Right), SLOT(keyHandleZP()));
+
+}
+
+void Window::shortcut(QKeySequence key, const char * execThis)
+{
+    QShortcut *shortcut = new QShortcut(key, this);
     shortcut->setContext(Qt::ApplicationShortcut);
-    connect(shortcut, SIGNAL(activated()), this, SLOT(close()));
+    connect(shortcut, SIGNAL(activated()), this, execThis);
+    wxyz[0] = wxyz[1] = wxyz[2] = wxyz[3] = 0;
+}
+
+void Window::keyHandleWM()
+{
+    keyHandle(0, -1);
+    if(wxyz[0] < 0) close();//exit on escape!
+}
+
+void Window::keyHandleWP()
+{
+    keyHandle(0, 1);
+}
+
+void Window::keyHandleXM()
+{
+    keyHandle(1, -1);
+}
+
+void Window::keyHandleXP()
+{
+    keyHandle(1, 1);
+}
+
+void Window::keyHandleYM()
+{
+    keyHandle(2, -1);
+}
+
+void Window::keyHandleYP()
+{
+    keyHandle(2, 1);
+}
+
+void Window::keyHandleZM()
+{
+    keyHandle(3, -1);
+}
+
+void Window::keyHandleZP()
+{
+    keyHandle(3, 1);
+}
+
+void Window::keyHandle(int idx, int inc)
+{
+    wxyz[idx] += inc;
 }
 
 void Window::setCurrentGlWidget()

@@ -51,16 +51,27 @@ class Window : public QWidget
 
 public:
     Window();
+    void shortcut(QKeySequence key, const char * execThis);
 
 private slots:
     void setCurrentGlWidget();
     void rotateOneStep();
+    void keyHandleWM();
+    void keyHandleWP();
+    void keyHandleXM();
+    void keyHandleXP();
+    void keyHandleYM();
+    void keyHandleYP();
+    void keyHandleZM();
+    void keyHandleZP();
 
 private:
     enum { NumRows = 4, NumColumns = 4 };
 
     GLWidget *glWidgets[NumRows][NumColumns];
     GLWidget *currentGlWidget;
+    int wxyz[4];
+    void keyHandle(int idx, int inc);
 };
 
 #endif
