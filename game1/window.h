@@ -41,6 +41,8 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include <QtGui>
+#include <QtWebKit/QWebView>
 #include <QWidget>
 
 class GLWidget;
@@ -72,6 +74,8 @@ private:
     GLWidget *currentGlWidget;
     int wxyz[4];
     void keyHandle(int idx, int inc);
+    QGridLayout *mainLayout;
+    QWebView * wv;
 };
 
 #endif

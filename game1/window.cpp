@@ -39,13 +39,14 @@
 ****************************************************************************/
 
 #include <QtGui>
+#include <QtWebKit/QWebView>
 
 #include "glwidget.h"
 #include "window.h"
 
 Window::Window()
 {
-    QGridLayout *mainLayout = new QGridLayout;
+    mainLayout = new QGridLayout;
 
     for (int i = 0; i < NumRows; ++i) {
         for (int j = 0; j < NumColumns; ++j) {
@@ -90,13 +91,19 @@ void Window::shortcut(QKeySequence key, const char * execThis)
 
 void Window::keyHandleWM()
 {
+    wv = new QWebView(this);
     keyHandle(0, -1);
-    if(wxyz[0] < 0) close();//exit on escape!
+    if(wxyz[0] == -1) {
+        mainLayout->addWidget(wv, 0, 0, 4, 4);
+        wv->setUrl(QUrl("qrc:/docs.html"));
+    }
+    if(wxyz[0] < -1) close();//exit on escape!
 }
 
 void Window::keyHandleWP()
 {
     keyHandle(0, 1);
+    if(wxyz[0] == 0) delete wv;
 }
 
 void Window::keyHandleXM()
