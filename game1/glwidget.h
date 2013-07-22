@@ -58,6 +58,7 @@ public:
     QSize sizeHint() const;
     void rotateBy(int xAngle, int yAngle, int zAngle);
     void setClearColor(const QColor &color);
+    void clickProxy();
 
 signals:
     void clicked();

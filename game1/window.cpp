@@ -139,6 +139,9 @@ void Window::keyHandleZP()
 void Window::keyHandle(int idx, int inc)
 {
     wxyz[idx] += inc;
+    //force an emit of click on one selection
+    if(wxyz[0] == 0) glWidgets[(unsigned int)(wxyz[2])%NumRows]
+            [(unsigned int)(wxyz[3])%NumColumns]->clickProxy();
 }
 
 void Window::setCurrentGlWidget()

@@ -217,6 +217,11 @@ void GLWidget::mouseReleaseEvent(QMouseEvent * /* event */)
     emit clicked();
 }
 
+void GLWidget::clickProxy()
+{
+    mouseReleaseEvent(NULL);
+}
+
 void GLWidget::makeObject()
 {
     static const int coords[6][4][3] = {
