@@ -43,6 +43,7 @@
 
 #include "glwidget.h"
 #include "window.h"
+#include "names.h"
 
 Window::Window()
 {
@@ -50,7 +51,7 @@ Window::Window()
 
     for (int i = 0; i < NumRows; ++i) {
         for (int j = 0; j < NumColumns; ++j) {
-            glWidgets[i][j] = new GLWidget(0, 0);
+            glWidgets[i][j] = new GLWidget(0, names[i*NumColumns+j], 0);
             mainLayout->addWidget(glWidgets[i][j], i, j);
 
             connect(glWidgets[i][j], SIGNAL(clicked()),

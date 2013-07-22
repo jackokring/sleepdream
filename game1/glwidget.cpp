@@ -40,12 +40,14 @@
 
 #include <QtGui>
 #include <QtOpenGL>
+#include <QTextStream>
 
 #include "glwidget.h"
 
-GLWidget::GLWidget(QWidget *parent, QGLWidget *shareWidget)
+GLWidget::GLWidget(QWidget *parent, const char *named, QGLWidget *shareWidget)
     : QGLWidget(parent, shareWidget)
 {
+    name = named;
     clearColor = Qt::black;
     xRot = 0;
     yRot = 0;
@@ -172,7 +174,7 @@ void GLWidget::paintGL()
 #endif
 
     for (int i = 0; i < 6; ++i) {
-        glBindTexture(GL_TEXTURE_2D, textures[i]);
+        glBindTexture(GL_TEXTURE_2D, textures);
         glDrawArrays(GL_TRIANGLE_FAN, i * 4, 4);
     }
 }
@@ -233,10 +235,15 @@ void GLWidget::makeObject()
         { { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }, { -1, +1, +1 } }
     };
 
-    for (int j=0; j < 6; ++j) {
-        textures[j] = bindTexture
-            (QPixmap(QString(":/images/side%1.png").arg(j + 1)), GL_TEXTURE_2D);
-    }
+    QString s = QString(":/images/").append(name).append(".png");
+    //QTextStream(stdout) << s << endl;
+
+    //for (int j=0; j < 6; ++j) {
+        textures = bindTexture
+                (QPixmap(s), GL_TEXTURE_2D);
+    //}
+
+
 
     for (int i = 0; i < 6; ++i) {
         for (int j = 0; j < 4; ++j) {

@@ -51,7 +51,7 @@ class GLWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    GLWidget(QWidget *parent = 0, QGLWidget *shareWidget = 0);
+    GLWidget(QWidget *parent = 0, const char * named = 0, QGLWidget *shareWidget = 0);
     ~GLWidget();
 
     QSize minimumSizeHint() const;
@@ -73,13 +73,14 @@ protected:
 
 private:
     void makeObject();
+    const char * name;
 
     QColor clearColor;
     QPoint lastPos;
     int xRot;
     int yRot;
     int zRot;
-    GLuint textures[6];
+    GLuint textures;//[6];
     QVector<QVector3D> vertices;
     QVector<QVector2D> texCoords;
 #ifdef QT_OPENGL_ES_2

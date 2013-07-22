@@ -1,11 +1,21 @@
 <RCC>
     <qresource prefix="/">
-        <file>images/side1.png</file>
-        <file>images/side2.png</file>
-        <file>images/side3.png</file>
-        <file>images/side4.png</file>
-        <file>images/side5.png</file>
-        <file>images/side6.png</file>
         <file>docs.html</file>
+        <file>images/Across.png</file>
+        <file>images/AstroDefender.png</file>
+        <file>images/Calculator.png</file>
+        <file>images/Carnage.png</file>
+        <file>images/CascadeRipple.png</file>
+        <file>images/Extras.png</file>
+        <file>images/GhostChess.png</file>
+        <file>images/Grid.png</file>
+        <file>images/Magnetris.png</file>
+        <file>images/MakeWords.png</file>
+        <file>images/MusicSynth.png</file>
+        <file>images/Simplatronics.png</file>
+        <file>images/SoundEvolver.png</file>
+        <file>images/StuntBike.png</file>
+        <file>images/TrainYard.png</file>
+        <file>images/Zap.png</file>
     </qresource>
 </RCC>
