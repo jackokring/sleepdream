@@ -26,23 +26,18 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 
 */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <iostream>
-#include <cstdio>
-#include <string>
+#include <QString>
+#include <QTimer>
+#include <QtGui>
 #include "Joystick.h"
 
-using namespace std;
-
-Joystick::Joystick () : 
-  m_init (false), 
-  m_axes (0), 
-  m_buttons (0), 
-  m_run (true)
+Joystick::Joystick () : QObject()
 {
+  m_init = false,
+  m_axes = 0,
+  m_buttons = 0,
+  m_run = true;
 }
 
 Joystick::~Joystick ()
@@ -50,12 +45,12 @@ Joystick::~Joystick ()
   this->close ();
 }
 
-bool Joystick::open (const string &device)
+bool Joystick::open (QString device)
 {
-  m_fd = ::open (device.c_str(), O_RDONLY);
+  m_fd = ::open (device.toStdString().c_str(), O_RDONLY);
   if (m_fd == -1)
   {
-    cerr << "Error opening joystick device!" << endl;
+    //cerr << "Error opening joystick device!" << endl;
     
     return false;
   }
@@ -89,7 +84,9 @@ bool Joystick::open (const string &device)
      * #define JSIOCGCORR      // get correction values
      */
     
-    thread = Glib::Thread::create (sigc::mem_fun (*this, &Joystick::loop), false);
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
+    timer->start(100);
     m_run = true;
   }
 
@@ -129,14 +126,14 @@ void Joystick::loop ()
       if (!m_init) m_init = true;
       eventJoy.number = joy_event.number;
       eventJoy.synthetic = false;
-      signalButton.emit (eventJoy);
+      emit signalButton(eventJoy);
       break;
 
     case JS_EVENT_AXIS:
       if (!m_init) m_init = true;
       eventJoy.number = joy_event.number;
       eventJoy.synthetic = false;
-      signalAxis.emit (eventJoy);
+      emit signalAxis(eventJoy);
       break;
 
     case JS_EVENT_BUTTON | JS_EVENT_INIT:
@@ -144,7 +141,7 @@ void Joystick::loop ()
       {
         eventJoy.number = joy_event.number & ~JS_EVENT_INIT;
         eventJoy.synthetic = true;
-        signalButton.emit (eventJoy);
+        emit signalButton(eventJoy);
       }
       break;
 
@@ -153,12 +150,13 @@ void Joystick::loop ()
       {
         eventJoy.number = joy_event.number & ~JS_EVENT_INIT;
         eventJoy.synthetic = true;
-        signalAxis.emit (eventJoy);
+        emit signalAxis(eventJoy);
       }
       break;
 
     default: // we should never reach this point
-      printf ("unknown event: %x\n", joy_event.type);
+        ;
+      //printf ("unknown event: %x\n", joy_event.type);
     }
   }
 }
@@ -173,7 +171,7 @@ int Joystick::getNumberOfAxes ()
   return m_axes;
 }
 
-const string &Joystick::getIdentifier ()
+const QString Joystick::getIdentifier ()
 {
   return m_name;
 }

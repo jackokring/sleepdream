@@ -1,16 +1,9 @@
 #ifndef JOYSTICK_H
 #define JOYSTICK_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <linux/joystick.h>
-#include <string>
-#include <sigc++/sigc++.h>
-#include <glibmm/thread.h>
-
-using std::string;
+#include <QString>
+#include <QObject>
 
 // for more info about the Linux Joystick API read
 // /usr/src/linux/Documentation/input/joystick-api.txt
@@ -24,19 +17,18 @@ struct EventJoystick
 };
 
 // TODO: configurable joystick device; best a manager for autodetect...
-class Joystick //: public sigc::trackable
+class Joystick : public QObject //: public sigc::trackable
 {
-public:
-  sigc::signal <void, const EventJoystick&> signalAxis;
-  sigc::signal <void, const EventJoystick&> signalButton;
+    Q_OBJECT
 
+public:
   Joystick ();
-  virtual ~Joystick ();
+  ~Joystick ();
 
   /* Open a joystick device.
    * @param device A device (e.g. /dev/input/jsX).
    */
-  bool open (const string &device);
+  bool open (QString device);
 
   /* Close the joystick device.
    */
@@ -57,22 +49,22 @@ public:
   /*
    * @return Identifier string of the Joystick
    */
-  const string &getIdentifier ();
+  const QString getIdentifier ();
 
-private: // intentionally not implemented
-  Joystick             (const Joystick&);
-  Joystick& operator = (const Joystick&);
+signals:
+    void signalAxis(EventJoystick e);
+    void signalButton(EventJoystick e);
 
 private:
   struct js_event joy_event;
   int m_fd;
-  Glib::Thread *thread;
   bool m_init;
   int m_axes;
   int m_buttons;
-  string m_name;
+  QString m_name;
   bool m_run;
 
+public slots:
   void loop ();
 };
 
