@@ -6,7 +6,7 @@ SOURCES       = glwidget.cpp \
                 window.cpp \
                 alsa.c
 RESOURCES     = game1.qrc
-QT           += opengl webkit
+QT           += opengl core gui webkitwidgets
 DEFINES += HAS_ALSA
 LIBS_PRIVATE += -lasound
 

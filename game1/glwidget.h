@@ -83,6 +83,7 @@ private:
     GLuint textures;//[6];
     QVector<QVector3D> vertices;
     QVector<QVector2D> texCoords;
+#define QT_OPENGL_ES_2
 #ifdef QT_OPENGL_ES_2
     QGLShaderProgram *program;
 #endif

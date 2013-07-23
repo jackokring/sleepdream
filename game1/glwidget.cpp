@@ -43,6 +43,7 @@
 #include <QTextStream>
 
 #include "glwidget.h"
+#define QT_OPENGL_ES_2
 
 GLWidget::GLWidget(QWidget *parent, const char *named, QGLWidget *shareWidget)
     : QGLWidget(parent, shareWidget)
@@ -143,7 +144,7 @@ void GLWidget::paintGL()
 
 #if !defined(QT_OPENGL_ES_2)
 
-    glLoadIdentity();
+    /* glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -10.0f);
     glRotatef(xRot / 16.0f, 1.0f, 0.0f, 0.0f);
     glRotatef(yRot / 16.0f, 0.0f, 1.0f, 0.0f);
@@ -152,7 +153,7 @@ void GLWidget::paintGL()
     glVertexPointer(3, GL_FLOAT, 0, vertices.constData());
     glTexCoordPointer(2, GL_FLOAT, 0, texCoords.constData());
     glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY); */
 
 #else
 

@@ -42,8 +42,9 @@
 #define WINDOW_H
 
 #include <QtGui>
-#include <QtWebKit/QWebView>
+#include <QtWebKitWidgets/QWebView>
 #include <QWidget>
+#include <QGridLayout>
 
 class GLWidget;
 

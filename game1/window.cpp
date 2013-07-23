@@ -39,7 +39,8 @@
 ****************************************************************************/
 
 #include <QtGui>
-#include <QtWebKit/QWebView>
+#include <QtWebKitWidgets/QWebView>
+#include <QShortcut>
 
 #include "glwidget.h"
 #include "window.h"
