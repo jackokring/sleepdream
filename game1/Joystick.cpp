@@ -37,7 +37,9 @@ Joystick::Joystick () : QObject()
 {
   m_axes = 0,
   m_buttons = 0,
+  count = 0,
   m_run = true;
+  lastCount[0] = lastCount[1] = lastJoy[0] = lastJoy[1] = 0;
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
 }
@@ -95,7 +97,6 @@ void Joystick::loop ()
 
   while (m_run)
   {
-    EventJoystick eventJoy;
 
     while(read (m_fd, &joy_event, sizeof(struct js_event)) > 0) {
 
@@ -115,11 +116,16 @@ void Joystick::loop ()
           }
       break;
     case JS_EVENT_AXIS:
-        eventJoy.value += qrand() % 16384;
+        if(eventJoy.number > 2) break;
+        inc = count - lastCount[eventJoy.number];
+        lastCount[eventJoy.number] = count;
+        lastJoy[eventJoy.number] = eventJoy.value;
+        if(inc == 0) break;//flood handler!
+        x = eventJoy.value + qrand() % 16384;
         switch(eventJoy.number) {
-        case 1: if(eventJoy.value > 16385) { emit keyHandleYP(); break; }
+        case 1: if(x > 16385) { emit keyHandleYP(); break; }
             else { emit keyHandleYM(); break; }
-        case 2: if(eventJoy.value < -16385) { emit keyHandleZP(); break; }
+        case 2: if(x < -16385) { emit keyHandleZP(); break; }
             else emit keyHandleZM(); break;
         default : break;
         }
@@ -130,6 +136,19 @@ void Joystick::loop ()
       //printf ("unknown event: %x\n", joy_event.type);
     }
   } }
+  for(int i = 0; i < 2; i++) { //event regulator
+      if(lastCount[i] != count) {
+          x = lastJoy[i] + qrand() % 16384;
+          switch(i) {
+          case 1: if(x > 16385) { emit keyHandleYP(); break; }
+              else { emit keyHandleYM(); break; }
+          case 2: if(x < -16385) { emit keyHandleZP(); break; }
+              else emit keyHandleZM(); break;
+          default : break;
+          }
+      }
+  }
+  count ++;
 }
 
 int Joystick::getNumberOfButtons ()

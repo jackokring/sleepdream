@@ -12,7 +12,7 @@
 struct EventJoystick
 {
   int32_t time;
-  int16_t value;
+  int32_t value;
   int8_t number;
 };
 
@@ -62,6 +62,12 @@ private:
   int m_axes;
   int m_buttons;
   QTimer * timer;
+  long count;
+  EventJoystick eventJoy;
+  long lastCount[2];
+  long lastJoy[2];
+  int inc;
+  long x;
 
 public:
   bool m_run;
