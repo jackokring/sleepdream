@@ -30,14 +30,16 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 #include <QString>
 #include <QTimer>
 #include <QtGui>
+#include <QtGlobal>
 #include "Joystick.h"
 
 Joystick::Joystick () : QObject()
 {
-  m_init = false,
   m_axes = 0,
   m_buttons = 0,
   m_run = true;
+  timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
 }
 
 Joystick::~Joystick ()
@@ -45,9 +47,9 @@ Joystick::~Joystick ()
   this->close ();
 }
 
-bool Joystick::open (QString device)
+bool Joystick::open (QString *device)
 {
-  m_fd = ::open (device.toStdString().c_str(), O_RDONLY);
+  m_fd = ::open (device->toStdString().c_str(), O_RDONLY | O_NONBLOCK);
   if (m_fd == -1)
   {
     //cerr << "Error opening joystick device!" << endl;
@@ -58,7 +60,6 @@ bool Joystick::open (QString device)
   {
     char buttons;
     char axes;
-    char name[128];
     
     // get number of buttons
     ioctl (m_fd, JSIOCGBUTTONS, &buttons);
@@ -68,24 +69,6 @@ bool Joystick::open (QString device)
     ioctl (m_fd, JSIOCGAXES, &axes);
     m_axes = axes;
     
-    // get device name
-    if (ioctl(m_fd, JSIOCGNAME (sizeof(name)), name) < 0)
-    {
-      m_name = "Unknown";
-    }
-    else
-    {
-      m_name = name;
-    }
-    
-    /* TODO: support those if needed
-     * #define JSIOCGVERSION   // get driver version
-     * #define JSIOCSCORR      // set correction values
-     * #define JSIOCGCORR      // get correction values
-     */
-    
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
     timer->start(100);
     m_run = true;
   }
@@ -99,7 +82,6 @@ bool Joystick::close ()
   m_run = false;
   
   // reset some values
-  m_init = false;
   m_axes = 0; 
   m_buttons = 0;
   
@@ -115,50 +97,39 @@ void Joystick::loop ()
   {
     EventJoystick eventJoy;
 
-    read (m_fd, &joy_event, sizeof(struct js_event));
+    while(read (m_fd, &joy_event, sizeof(struct js_event)) > 0) {
 
     eventJoy.time = joy_event.time;
     eventJoy.value = joy_event.value;
+    eventJoy.number = joy_event.number;
 
-    switch (joy_event.type)
+    switch (joy_event.type & ~JS_EVENT_INIT)
     {
     case JS_EVENT_BUTTON:
-      if (!m_init) m_init = true;
-      eventJoy.number = joy_event.number;
-      eventJoy.synthetic = false;
-      emit signalButton(eventJoy);
+          switch(eventJoy.number) {
+          case 1: if(eventJoy.value) emit keyHandleWP(); break;
+          case 2: if(eventJoy.value) emit keyHandleXP(); break;
+          case 3: if(eventJoy.value) emit keyHandleXM(); break;
+          case 4: if(eventJoy.value) emit keyHandleWM(); break;
+          default : break;
+          }
       break;
-
     case JS_EVENT_AXIS:
-      if (!m_init) m_init = true;
-      eventJoy.number = joy_event.number;
-      eventJoy.synthetic = false;
-      emit signalAxis(eventJoy);
-      break;
-
-    case JS_EVENT_BUTTON | JS_EVENT_INIT:
-      if (m_init) // skip the synthetic events on driver start
-      {
-        eventJoy.number = joy_event.number & ~JS_EVENT_INIT;
-        eventJoy.synthetic = true;
-        emit signalButton(eventJoy);
-      }
-      break;
-
-    case JS_EVENT_AXIS | JS_EVENT_INIT:
-      if (m_init) // skip the synthetic events on driver start
-      {
-        eventJoy.number = joy_event.number & ~JS_EVENT_INIT;
-        eventJoy.synthetic = true;
-        emit signalAxis(eventJoy);
-      }
+        eventJoy.value += qrand() % 16384;
+        switch(eventJoy.number) {
+        case 1: if(eventJoy.value > 16385) { emit keyHandleYP(); break; }
+            else { emit keyHandleYM(); break; }
+        case 2: if(eventJoy.value < -16385) { emit keyHandleZP(); break; }
+            else emit keyHandleZM(); break;
+        default : break;
+        }
       break;
 
     default: // we should never reach this point
-        ;
+        break;
       //printf ("unknown event: %x\n", joy_event.type);
     }
-  }
+  } }
 }
 
 int Joystick::getNumberOfButtons ()
@@ -169,9 +140,4 @@ int Joystick::getNumberOfButtons ()
 int Joystick::getNumberOfAxes ()
 {
   return m_axes;
-}
-
-const QString Joystick::getIdentifier ()
-{
-  return m_name;
 }

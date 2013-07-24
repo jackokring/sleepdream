@@ -45,6 +45,7 @@
 #include <QtWebKitWidgets/QWebView>
 #include <QWidget>
 #include <QGridLayout>
+#include "Joystick.h"
 
 class GLWidget;
 
@@ -67,6 +68,7 @@ private slots:
     void keyHandleYP();
     void keyHandleZM();
     void keyHandleZP();
+    void hotPlug();
 
 private:
     enum { NumRows = 4, NumColumns = 4 };
@@ -75,6 +77,7 @@ private:
     GLWidget *currentGlWidget;
     int wxyz[4];
     void keyHandle(int idx, int inc);
+    Joystick *j;
     QGridLayout *mainLayout;
     QWebView * wv;
 };

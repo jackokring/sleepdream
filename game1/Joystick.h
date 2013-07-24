@@ -4,6 +4,7 @@
 #include <linux/joystick.h>
 #include <QString>
 #include <QObject>
+#include <QTimer>
 
 // for more info about the Linux Joystick API read
 // /usr/src/linux/Documentation/input/joystick-api.txt
@@ -13,7 +14,6 @@ struct EventJoystick
   int32_t time;
   int16_t value;
   int8_t number;
-  bool synthetic;
 };
 
 // TODO: configurable joystick device; best a manager for autodetect...
@@ -28,7 +28,7 @@ public:
   /* Open a joystick device.
    * @param device A device (e.g. /dev/input/jsX).
    */
-  bool open (QString device);
+  bool open (QString *device);
 
   /* Close the joystick device.
    */
@@ -45,23 +45,25 @@ public:
    * @return -1 Initializing not finished.
    */
   int getNumberOfAxes ();
-  
-  /*
-   * @return Identifier string of the Joystick
-   */
-  const QString getIdentifier ();
 
 signals:
-    void signalAxis(EventJoystick e);
-    void signalButton(EventJoystick e);
+  void keyHandleWM();
+  void keyHandleWP();
+  void keyHandleXM();
+  void keyHandleXP();
+  void keyHandleYM();
+  void keyHandleYP();
+  void keyHandleZM();
+  void keyHandleZP();
 
 private:
   struct js_event joy_event;
   int m_fd;
-  bool m_init;
   int m_axes;
   int m_buttons;
-  QString m_name;
+  QTimer * timer;
+
+public:
   bool m_run;
 
 public slots:

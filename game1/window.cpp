@@ -45,6 +45,7 @@
 #include "glwidget.h"
 #include "window.h"
 #include "names.h"
+#include "Joystick.h"
 
 Window::Window()
 {
@@ -81,6 +82,27 @@ Window::Window()
     shortcut(QKeySequence(Qt::Key_Left), SLOT(keyHandleZM()));
     shortcut(QKeySequence(Qt::Key_Right), SLOT(keyHandleZP()));
 
+    j = new Joystick();
+
+    connect(j,SIGNAL(keyHandleWM()), this , SLOT(keyHandleWM()));
+    connect(j,SIGNAL(keyHandleWP()), this , SLOT(keyHandleWP()));
+    connect(j,SIGNAL(keyHandleXM()), this , SLOT(keyHandleXM()));
+    connect(j,SIGNAL(keyHandleXP()), this , SLOT(keyHandleXP()));
+
+    connect(j,SIGNAL(keyHandleYM()), this , SLOT(keyHandleYM()));
+    connect(j,SIGNAL(keyHandleYP()), this , SLOT(keyHandleYP()));
+    connect(j,SIGNAL(keyHandleZM()), this , SLOT(keyHandleZM()));
+    connect(j,SIGNAL(keyHandleZP()), this , SLOT(keyHandleZP()));
+
+    QTimer *hot = new QTimer(this);
+    connect(hot, SIGNAL(timeout()), this, SLOT(hotPlug()));
+    hot->start(1000);
+}
+
+void Window::hotPlug() {
+    if(j->m_run) return;
+    j->close();
+    j->open(new QString("/dev/input/js0"));
 }
 
 void Window::shortcut(QKeySequence key, const char * execThis)
