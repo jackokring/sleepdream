@@ -31,7 +31,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 #include <QTimer>
 #include <QtGui>
 #include <QtGlobal>
+#include <QCursor>
 #include "Joystick.h"
+
+Window * Joystick::mouseState = NULL;
 
 Joystick::Joystick () : QObject()
 {
@@ -39,7 +42,7 @@ Joystick::Joystick () : QObject()
   m_buttons = 0,
   count = 0,
   m_run = true;
-  lastCount[0] = lastCount[1] = lastJoy[0] = lastJoy[1] = 0;
+
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
 }
@@ -49,8 +52,28 @@ Joystick::~Joystick ()
   this->close ();
 }
 
-bool Joystick::open (QString *device)
+int rdr(int m_fd, void *jev, unsigned int size) {
+    js_event *je = (js_event *)jev;
+    je->type = JS_EVENT_AXIS;
+    int count = qrand()&3;
+    je->number = count&1;
+    switch(count) {
+    case 0: je->value = QCursor::pos().x() * 65536 / (Joystick::mouseState->frameGeometry().width())
+                - 32768; break;
+    case 1: je->value = QCursor::pos().y() * 65536 / (Joystick::mouseState->frameGeometry().height())
+                - 32768; break;
+
+    default: je->type = JS_EVENT_BUTTON;
+        je->number = count;
+        je->value = Joystick::mouseState->mouse[3-(count&3)];
+        break;
+    }
+    return size;
+}
+
+bool Joystick::open (QString *device, Window *widget)
 {
+    Joystick::mouseState = widget;
   m_fd = ::open (device->toStdString().c_str(), O_RDONLY | O_NONBLOCK);
   if (m_fd == -1)
   {
@@ -80,6 +103,7 @@ bool Joystick::open (QString *device)
 
 bool Joystick::close ()
 {
+  lastCount[0] = lastCount[1] = lastJoy[0] = lastJoy[1] = 0;
   // end thread
   m_run = false;
   
@@ -98,7 +122,9 @@ void Joystick::loop ()
   while (m_run)
   {
 
-    while(read (m_fd, &joy_event, sizeof(struct js_event)) > 0) {
+    if(Joystick::mouseState->mouseOn) rdrf = rdr;
+    else rdrf = read;
+    while((*rdrf) (m_fd, &joy_event, sizeof(struct js_event)) > 0) {
 
     eventJoy.time = joy_event.time;
     eventJoy.value = joy_event.value;

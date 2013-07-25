@@ -165,32 +165,9 @@ void GLWidget::resizeGL(int width, int height)
 
 }
 
-void GLWidget::mousePressEvent(QMouseEvent *event)
-{
-    lastPos = event->pos();
-}
-
-void GLWidget::mouseMoveEvent(QMouseEvent *event)
-{
-    int dx = event->x() - lastPos.x();
-    int dy = event->y() - lastPos.y();
-
-    if (event->buttons() & Qt::LeftButton) {
-        rotateBy(8 * dy, 8 * dx, 0);
-    } else if (event->buttons() & Qt::RightButton) {
-        rotateBy(8 * dy, 0, 8 * dx);
-    }
-    lastPos = event->pos();
-}
-
-void GLWidget::mouseReleaseEvent(QMouseEvent * /* event */)
-{
-    emit clicked();
-}
-
 void GLWidget::clickProxy()
 {
-    mouseReleaseEvent(NULL);
+    emit clicked();
 }
 
 void GLWidget::makeObject()

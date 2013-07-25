@@ -5,6 +5,9 @@
 #include <QString>
 #include <QObject>
 #include <QTimer>
+#include "window.h"
+
+class Window;
 
 // for more info about the Linux Joystick API read
 // /usr/src/linux/Documentation/input/joystick-api.txt
@@ -28,7 +31,7 @@ public:
   /* Open a joystick device.
    * @param device A device (e.g. /dev/input/jsX).
    */
-  bool open (QString *device);
+  bool open (QString *device, Window *widget);
 
   /* Close the joystick device.
    */
@@ -68,9 +71,12 @@ private:
   long lastJoy[2];
   int inc;
   long x;
+  //int rdr(int m_fd, void *jev, unsigned int size);
+  int (*rdrf)(int m_fd, void *jev, unsigned int size);
 
 public:
   bool m_run;
+  static Window *mouseState;
 
 public slots:
   void loop ();

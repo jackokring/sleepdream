@@ -50,6 +50,7 @@
 Window::Window()
 {
     mainLayout = new QGridLayout;
+    mouseOn = mouse[0] = mouse[1] = false;
 
     for (int i = 0; i < NumRows; ++i) {
         for (int j = 0; j < NumColumns; ++j) {
@@ -82,6 +83,8 @@ Window::Window()
     shortcut(QKeySequence(Qt::Key_Left), SLOT(keyHandleZM()));
     shortcut(QKeySequence(Qt::Key_Right), SLOT(keyHandleZP()));
 
+    shortcut(QKeySequence(Qt::Key_Backspace), SLOT(mouseFlip()));
+
     j = new Joystick();
 
     connect(j,SIGNAL(keyHandleWM()), this , SLOT(keyHandleWM()));
@@ -99,10 +102,43 @@ Window::Window()
     hot->start(1000);
 }
 
+bool Window::eventFilter(QObject *object, QEvent *event)
+ {
+    if(!mouseOn || object != this) return false;
+     if (event->type() == QEvent::MouseButtonPress) {
+         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+         if (mouseEvent->buttons() & Qt::LeftButton) {
+             mouse[0] = true;
+             return true;
+         }
+         if (mouseEvent->buttons() & Qt::RightButton) {
+             mouse[1] = true;
+             return true;
+         }
+     }
+     if (event->type() == QEvent::MouseButtonRelease) {
+         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+         if (mouseEvent->buttons() & Qt::LeftButton) {
+             mouse[0] = false;
+             return true;
+         }
+         if (mouseEvent->buttons() & Qt::RightButton) {
+             mouse[1] = false;
+             return true;
+         }
+     }
+     return false;
+ }
+
+void Window::mouseFlip() {
+    mouseOn = !mouseOn;
+    mouse[0] = mouse[1] = 0;
+}
+
 void Window::hotPlug() {
     if(j->m_run) return;
     j->close();
-    j->open(new QString("/dev/input/js0"));
+    j->open(new QString("/dev/input/js0"), this);
 }
 
 void Window::shortcut(QKeySequence key, const char * execThis)

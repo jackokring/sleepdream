@@ -48,10 +48,13 @@
 #include "Joystick.h"
 
 class GLWidget;
+class Joystick;
 
 class Window : public QWidget
 {
     Q_OBJECT
+
+    bool eventFilter(QObject *object, QEvent *event);
 
 public:
     Window();
@@ -69,6 +72,11 @@ private slots:
     void keyHandleZM();
     void keyHandleZP();
     void hotPlug();
+    void mouseFlip();
+
+public:
+    bool mouseOn;
+    bool mouse[2];
 
 private:
     enum { NumRows = 4, NumColumns = 4 };
