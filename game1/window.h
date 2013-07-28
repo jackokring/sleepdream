@@ -75,12 +75,14 @@ private slots:
     void mouseFlip();
 
 public:
+    enum { NumRows = 4, NumColumns = 4 };
     bool mouseOn;
     bool mouse[2];
+    static const char * names[16];
+
+    static GLWidget * gameArray[NumRows * NumColumns];
 
 private:
-    enum { NumRows = 4, NumColumns = 4 };
-
     GLWidget *glWidgets[NumRows][NumColumns];
     GLWidget *currentGlWidget;
     int wxyz[4];

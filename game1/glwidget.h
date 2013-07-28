@@ -51,8 +51,9 @@ class GLWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    GLWidget(QWidget *parent = 0, const char * named = 0, QGLWidget *shareWidget = 0);
+    GLWidget(QWidget *parent = 0, int idxi = 0, QGLWidget *shareWidget = 0);
     ~GLWidget();
+    static int idx;
 
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
@@ -70,7 +71,7 @@ protected:
 
 private:
     void makeObject();
-    const char * name;
+    int name;
 
     QColor clearColor;
     QPoint lastPos;

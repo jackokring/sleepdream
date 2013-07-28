@@ -1,6 +1,5 @@
 HEADERS       = glwidget.h \
                 window.h \
-                names.h \
     Joystick.h
 SOURCES       = glwidget.cpp \
                 main.cpp \

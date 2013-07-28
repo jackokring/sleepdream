@@ -41,11 +41,31 @@
 #include <QtGui>
 #include <QtWebKitWidgets/QWebView>
 #include <QShortcut>
+#include <QDebug>
 
 #include "glwidget.h"
 #include "window.h"
-#include "names.h"
-#include "Joystick.h"
+
+const char * Window::names[16] = {
+    "AstroDefender",
+    "Zap",
+    "Carnage",
+    "Grid",
+    "TrainYard",
+    "StuntBike",
+    "GhostChess",
+    "CascadeRipple",
+    "Across",
+    "Magnetris",
+    "Simplatronics",
+    "MakeWords",
+    "MusicSynth",
+    "SoundEvolver",
+    "Calculator",
+    "Extras"
+};
+
+GLWidget * Window::gameArray[Window::NumRows * Window::NumColumns];
 
 Window::Window()
 {
@@ -54,7 +74,8 @@ Window::Window()
 
     for (int i = 0; i < NumRows; ++i) {
         for (int j = 0; j < NumColumns; ++j) {
-            glWidgets[i][j] = new GLWidget(0, names[i*NumColumns+j], 0);
+            glWidgets[i][j] = new GLWidget(0, i*NumColumns+j, 0);
+            Window::gameArray[i*NumColumns+j] = glWidgets[i][j];
             mainLayout->addWidget(glWidgets[i][j], i, j);
 
             connect(glWidgets[i][j], SIGNAL(clicked()),
@@ -83,7 +104,7 @@ Window::Window()
     shortcut(QKeySequence(Qt::Key_Left), SLOT(keyHandleZM()));
     shortcut(QKeySequence(Qt::Key_Right), SLOT(keyHandleZP()));
 
-    shortcut(QKeySequence(Qt::Key_Dollar), SLOT(mouseFlip()));
+    shortcut(QKeySequence(Qt::Key_Alt), SLOT(mouseFlip()));
 
     j = new Joystick();
 
@@ -158,12 +179,31 @@ void Window::keyHandleWM()
         wv->setUrl(QUrl("qrc:/docs.html"));
     }
     if(wxyz[0] < -1) close();//exit on escape!
+    if(wxyz[0] == 0) {
+        for (int i = 0; i < NumRows; ++i) {
+            for (int k = 0; k < NumColumns; ++k) {
+                mainLayout->addWidget((QWidget *)Window::gameArray[i*NumColumns+k], i, k);
+                glWidgets[i][k]->show();
+            }
+        }
+    }
 }
 
 void Window::keyHandleWP()
 {
     keyHandle(0, 1);
     if(wxyz[0] == 0) delete wv;
+    if(wxyz[0] == 1) {
+        int idx = GLWidget::idx;
+        mainLayout->addWidget((QWidget *)Window::gameArray[idx], 0, 0, 4, 4);
+        for (int i = 0; i < NumRows; ++i) {
+            for (int k = 0; k < NumColumns; ++k) {
+                if(idx != i*NumColumns+k) glWidgets[i][k]->hide();
+                //qDebug() << i << k << idx;
+            }
+        }
+        this->repaint();//ELSE TODO first select bug!!!
+    }
 }
 
 void Window::keyHandleXM()

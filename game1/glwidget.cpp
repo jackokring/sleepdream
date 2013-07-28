@@ -43,12 +43,17 @@
 #include <QTextStream>
 
 #include "glwidget.h"
+#include "window.h"
 #define QT_OPENGL_ES_2
 
-GLWidget::GLWidget(QWidget *parent, const char *named, QGLWidget *shareWidget)
+class Window;
+
+int GLWidget::idx = 0;
+
+GLWidget::GLWidget(QWidget *parent, int idxi, QGLWidget *shareWidget)
     : QGLWidget(parent, shareWidget)
 {
-    name = named;
+    name = idxi;
     clearColor = Qt::black;
     xRot = 0;
     yRot = 0;
@@ -167,6 +172,7 @@ void GLWidget::resizeGL(int width, int height)
 
 void GLWidget::clickProxy()
 {
+    idx = name;
     emit clicked();
 }
 
@@ -181,7 +187,7 @@ void GLWidget::makeObject()
         { { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }, { -1, +1, +1 } }
     };
 
-    QString s = QString(":/images/").append(name).append(".png");
+    QString s = QString(":/images/").append(Window::names[name]).append(".png");
     //QTextStream(stdout) << s << endl;
 
     //for (int j=0; j < 6; ++j) {
