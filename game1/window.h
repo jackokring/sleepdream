@@ -80,8 +80,6 @@ public:
     bool mouse[2];
     static const char * names[16];
 
-    static GLWidget * gameArray[NumRows * NumColumns];
-
 private:
     GLWidget *glWidgets[NumRows][NumColumns];
     GLWidget *currentGlWidget;

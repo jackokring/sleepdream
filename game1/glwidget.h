@@ -53,13 +53,14 @@ class GLWidget : public QGLWidget
 public:
     GLWidget(QWidget *parent = 0, int idxi = 0, QGLWidget *shareWidget = 0);
     ~GLWidget();
-    static int idx;
 
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
     void rotateBy(int xAngle, int yAngle, int zAngle);
     void setClearColor(const QColor &color);
     void clickProxy();
+    bool playDo;
+    void play(bool tog);
 
 signals:
     void clicked();

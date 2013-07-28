@@ -65,17 +65,33 @@ const char * Window::names[16] = {
     "Extras"
 };
 
-GLWidget * Window::gameArray[Window::NumRows * Window::NumColumns];
-
 Window::Window()
 {
+    glWidgets[0][0] = new GLWidget(0, 0, 0);
+    glWidgets[0][1] = new GLWidget(0, 1, 0);
+    glWidgets[0][2] = new GLWidget(0, 2, 0);
+    glWidgets[0][3] = new GLWidget(0, 3, 0);
+
+    glWidgets[1][0] = new GLWidget(0, 4, 0);
+    glWidgets[1][1] = new GLWidget(0, 5, 0);
+    glWidgets[1][2] = new GLWidget(0, 6, 0);
+    glWidgets[1][3] = new GLWidget(0, 7, 0);
+
+    glWidgets[2][0] = new GLWidget(0, 8, 0);
+    glWidgets[2][1] = new GLWidget(0, 9, 0);
+    glWidgets[2][2] = new GLWidget(0, 10, 0);
+    glWidgets[2][3] = new GLWidget(0, 11, 0);
+
+    glWidgets[3][0] = new GLWidget(0, 12, 0);
+    glWidgets[3][1] = new GLWidget(0, 13, 0);
+    glWidgets[3][2] = new GLWidget(0, 14, 0);
+    glWidgets[3][3] = new GLWidget(0, 15, 0);
+
     mainLayout = new QGridLayout;
     mouseOn = mouse[0] = mouse[1] = false;
 
     for (int i = 0; i < NumRows; ++i) {
         for (int j = 0; j < NumColumns; ++j) {
-            glWidgets[i][j] = new GLWidget(0, i*NumColumns+j, 0);
-            Window::gameArray[i*NumColumns+j] = glWidgets[i][j];
             mainLayout->addWidget(glWidgets[i][j], i, j);
 
             connect(glWidgets[i][j], SIGNAL(clicked()),
@@ -182,10 +198,11 @@ void Window::keyHandleWM()
     if(wxyz[0] == 0) {
         for (int i = 0; i < NumRows; ++i) {
             for (int k = 0; k < NumColumns; ++k) {
-                mainLayout->addWidget((QWidget *)Window::gameArray[i*NumColumns+k], i, k);
+                mainLayout->addWidget(glWidgets[i][k], i, k);
                 glWidgets[i][k]->show();
             }
         }
+        currentGlWidget->play(false);
     }
 }
 
@@ -194,15 +211,17 @@ void Window::keyHandleWP()
     keyHandle(0, 1);
     if(wxyz[0] == 0) delete wv;
     if(wxyz[0] == 1) {
-        int idx = GLWidget::idx;
-        mainLayout->addWidget((QWidget *)Window::gameArray[idx], 0, 0, 4, 4);
+        GLWidget *idx = currentGlWidget;
         for (int i = 0; i < NumRows; ++i) {
             for (int k = 0; k < NumColumns; ++k) {
-                if(idx != i*NumColumns+k) glWidgets[i][k]->hide();
-                //qDebug() << i << k << idx;
+                if(idx != glWidgets[i][k]) glWidgets[i][k]->hide();
             }
         }
-        this->repaint();//ELSE TODO first select bug!!!
+        mainLayout->addWidget(idx, 0, 0, 4, 4);
+    }
+    if(wxyz[0] == 2) {
+        currentGlWidget->play(true);
+        wxyz[0]--;
     }
 }
 
@@ -239,6 +258,9 @@ void Window::keyHandleZP()
 void Window::keyHandle(int idx, int inc)
 {
     wxyz[idx] += inc;
+    if( (!currentGlWidget->playDo) && wxyz[0] != 0) {//reset events
+        wxyz[1] = wxyz[2] = wxyz[3] = 0;
+    }
     //force an emit of click on one selection
     if(wxyz[0] == 0) glWidgets[(unsigned int)(wxyz[2])%NumRows]
             [(unsigned int)(wxyz[3])%NumColumns]->clickProxy();

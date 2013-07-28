@@ -48,8 +48,6 @@
 
 class Window;
 
-int GLWidget::idx = 0;
-
 GLWidget::GLWidget(QWidget *parent, int idxi, QGLWidget *shareWidget)
     : QGLWidget(parent, shareWidget)
 {
@@ -59,10 +57,20 @@ GLWidget::GLWidget(QWidget *parent, int idxi, QGLWidget *shareWidget)
     yRot = 0;
     zRot = 0;
     program = 0;
+    playDo = false;
 }
 
 GLWidget::~GLWidget()
 {
+}
+
+void GLWidget::play(bool tog) {
+    if(tog) {
+        playDo = !playDo;//tab key
+    } else {
+        playDo = false;//esc key
+    }
+
 }
 
 QSize GLWidget::minimumSizeHint() const
@@ -172,7 +180,6 @@ void GLWidget::resizeGL(int width, int height)
 
 void GLWidget::clickProxy()
 {
-    idx = name;
     emit clicked();
 }
 
