@@ -65,7 +65,6 @@ private:
   int m_axes;
   int m_buttons;
   QTimer * timer;
-  long count;
   EventJoystick eventJoy;
   long lastCount[2];
   long lastJoy[2];
@@ -76,6 +75,8 @@ private:
 
 public:
   bool m_run;
+  static long count;
+  static long mouseCount;
   static Window *mouseState;
 
 public slots:
