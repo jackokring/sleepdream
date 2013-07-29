@@ -1,11 +1,12 @@
 HEADERS       = glwidget.h \
                 window.h \
-    Joystick.h
+    Joystick.h \
+    alsa.h
 SOURCES       = glwidget.cpp \
                 main.cpp \
                 window.cpp \
-                alsa.c \
-    Joystick.cpp
+    Joystick.cpp \
+    alsa.cpp
 RESOURCES     = game1.qrc
 QT           += opengl core gui webkitwidgets
 DEFINES += HAS_ALSA
