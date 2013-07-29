@@ -41,14 +41,13 @@ long Joystick::mouseCount = 0;
 
 Joystick::Joystick () : QObject()
 {
-  m_axes = 0,
-  m_buttons = 0,
-  count = 0,
   m_run = false;
+
+  lastJoy[0] = lastJoy[1] = 0;
 
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
-  timer->start(100);
+  timer->start(200);
 }
 
 Joystick::~Joystick ()
@@ -60,17 +59,16 @@ int rdr(int m_fd, void *jev, unsigned int size) {
     if(Joystick::count == Joystick::mouseCount) return 0;
     js_event *je = (js_event *)jev;
     je->type = JS_EVENT_AXIS;
-    int count = qrand()&3;
-    je->number = count&1;
-    switch(count) {
+    je->number = Joystick::count&1;
+    switch(Joystick::count&3) {
     case 0: je->value = QCursor::pos().x() * 65536 / (Joystick::mouseState->frameGeometry().width())
                 - 32768; break;
     case 1: je->value = QCursor::pos().y() * 65536 / (Joystick::mouseState->frameGeometry().height())
                 - 32768; break;
 
     default: je->type = JS_EVENT_BUTTON;
-        je->number = count;
-        je->value = Joystick::mouseState->mouse[3-(count&3)];
+        je->number = Joystick::count;
+        je->value = Joystick::mouseState->mouse[3-(Joystick::count&3)];
         break;
     }
     Joystick::mouseCount = Joystick::count;
@@ -89,17 +87,6 @@ bool Joystick::open (QString *device, Window *widget)
   }
   else
   {
-    char buttons;
-    char axes;
-    
-    // get number of buttons
-    ioctl (m_fd, JSIOCGBUTTONS, &buttons);
-    m_buttons = buttons;
-    
-    // get number of axes
-    ioctl (m_fd, JSIOCGAXES, &axes);
-    m_axes = axes;
-    
     m_run = true;
   }
 
@@ -109,12 +96,8 @@ bool Joystick::open (QString *device, Window *widget)
 bool Joystick::close ()
 {
   m_run = false;
-  lastCount[0] = lastCount[1] = lastJoy[0] = lastJoy[1] = 0;
+  lastJoy[0] = lastJoy[1] = 0;
   // end thread
-  
-  // reset some values
-  m_axes = 0; 
-  m_buttons = 0;
   
   return !::close (m_fd);
 }
@@ -142,55 +125,29 @@ void Joystick::loop ()
         {
         case JS_EVENT_BUTTON:
               switch(eventJoy.number) {
-              case 1: if(eventJoy.value) emit keyHandleWP(); break;
-              case 2: if(eventJoy.value) emit keyHandleXP(); break;
-              case 3: if(eventJoy.value) emit keyHandleXM(); break;
-              case 4: if(eventJoy.value) emit keyHandleWM(); break;
+              case 0: if(eventJoy.value) emit keyHandleWP(); break;
+              case 1: if(eventJoy.value) emit keyHandleXP(); break;
+              case 2: if(eventJoy.value) emit keyHandleXM(); break;
+              case 3: if(eventJoy.value) emit keyHandleWM(); break;
               default : break;
               }
           break;
         case JS_EVENT_AXIS:
-            if(eventJoy.number > 2) break;
-            inc = Joystick::count - lastCount[eventJoy.number];
-            lastCount[eventJoy.number] = Joystick::count;
+            if(eventJoy.number > 1) break;
             lastJoy[eventJoy.number] = eventJoy.value;
-            if(inc == 0) break;//flood handler!
-            x = eventJoy.value + qrand() % 16384;
-            switch(eventJoy.number) {
-            case 1: if(x > 16385) { emit keyHandleYP(); break; }
-                else { emit keyHandleYM(); break; }
-            case 2: if(x < -16385) { emit keyHandleZP(); break; }
-                else emit keyHandleZM(); break;
-            default : break;
-            }
-          break;
-
-        default: // we should never reach this point
-            break;
-          //printf ("unknown event: %x\n", joy_event.type);
         }
   }
   for(int i = 0; i < 2; i++) { //event regulator
-      if(lastCount[i] != Joystick::count) {
-          x = lastJoy[i] + qrand() % 16384;
-          switch(i) {
-          case 1: if(x > 16385) { emit keyHandleYP(); break; }
-              else { emit keyHandleYM(); break; }
-          case 2: if(x < -16385) { emit keyHandleZP(); break; }
-              else emit keyHandleZM(); break;
-          default : break;
-          }
+      long x = lastJoy[i] + (signed int)(qrand() % 32768) - 16384;
+      switch(i) {
+      case 0: if(x > 16386) { emit keyHandleZP(); }
+          if(x < -16386) { emit keyHandleZM(); }
+          break;
+      case 1: if(x > 16386) { emit keyHandleYP(); }
+          if(x < -16386) { emit keyHandleYM(); }
+          break;
+      default : break;
       }
   }
   Joystick::count ++;
-}
-
-int Joystick::getNumberOfButtons ()
-{
-  return m_buttons;
-}
-
-int Joystick::getNumberOfAxes ()
-{
-  return m_axes;
 }

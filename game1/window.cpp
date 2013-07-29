@@ -218,6 +218,7 @@ void Window::keyHandleWP()
             }
         }
         mainLayout->addWidget(idx, 0, 0, 4, 4);
+        this->repaint();//1st draw
     }
     if(wxyz[0] == 2) {
         currentGlWidget->play(true);

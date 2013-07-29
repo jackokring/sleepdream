@@ -37,18 +37,6 @@ public:
    */
   bool close ();
 
-  /*
-   * @return Number of available buttons.
-   * @return -1 Initializing not finished.
-   */
-  int getNumberOfButtons ();
-
-  /*
-   * @return Number of available axis.
-   * @return -1 Initializing not finished.
-   */
-  int getNumberOfAxes ();
-
 signals:
   void keyHandleWM();
   void keyHandleWP();
@@ -62,14 +50,9 @@ signals:
 private:
   struct js_event joy_event;
   int m_fd;
-  int m_axes;
-  int m_buttons;
   QTimer * timer;
   EventJoystick eventJoy;
-  long lastCount[2];
   long lastJoy[2];
-  int inc;
-  long x;
   //int rdr(int m_fd, void *jev, unsigned int size);
   int (*rdrf)(int m_fd, void *jev, unsigned int size);
 
