@@ -56,22 +56,25 @@ Joystick::~Joystick ()
 }
 
 int rdr(int m_fd, void *jev, unsigned int size) {
-    if(Joystick::count == Joystick::mouseCount) return 0;
+    if(Joystick::mouseCount > 3) {
+        Joystick::mouseCount = 0;
+        return 0;
+    }
     js_event *je = (js_event *)jev;
     je->type = JS_EVENT_AXIS;
-    je->number = Joystick::count&1;
-    switch(Joystick::count&3) {
-    case 0: je->value = QCursor::pos().x() * 65536 / (Joystick::mouseState->frameGeometry().width())
+    je->number = Joystick::mouseCount&1;
+    switch(Joystick::mouseCount&3) {
+    case 0: je->value = (long)(QCursor::pos().x() * 65536) / (Joystick::mouseState->geometry().width())
                 - 32768; break;
-    case 1: je->value = QCursor::pos().y() * 65536 / (Joystick::mouseState->frameGeometry().height())
+    case 1: je->value = (long)(QCursor::pos().y() * 65536) / (Joystick::mouseState->geometry().height())
                 - 32768; break;
 
     default: je->type = JS_EVENT_BUTTON;
-        je->number = Joystick::count;
-        je->value = Joystick::mouseState->mouse[3-(Joystick::count&3)];
+        je->number = Joystick::mouseCount-1;
+        je->value = Joystick::mouseState->mouse[3-(Joystick::mouseCount&3)];
         break;
     }
-    Joystick::mouseCount = Joystick::count;
+    Joystick::mouseCount++;
     return size;
 }
 
@@ -149,5 +152,4 @@ void Joystick::loop ()
       default : break;
       }
   }
-  Joystick::count ++;
 }

@@ -120,7 +120,7 @@ Window::Window()
     shortcut(QKeySequence(Qt::Key_Left), SLOT(keyHandleZM()));
     shortcut(QKeySequence(Qt::Key_Right), SLOT(keyHandleZP()));
 
-    shortcut(QKeySequence(Qt::Key_Alt), SLOT(mouseFlip()));
+    shortcut(QKeySequence(Qt::Key_Delete), SLOT(mouseFlip()));
 
     j = new Joystick();
 
