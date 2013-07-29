@@ -67,25 +67,25 @@ const char * Window::names[16] = {
 
 Window::Window()
 {
-    glWidgets[0][0] = new GLWidget(0, 0, 0);
-    glWidgets[0][1] = new GLWidget(0, 1, 0);
-    glWidgets[0][2] = new GLWidget(0, 2, 0);
-    glWidgets[0][3] = new GLWidget(0, 3, 0);
+    glWidgets[0][0] = new GLWidget(this, 0, 0);
+    glWidgets[0][1] = new GLWidget(this, 1, 0);
+    glWidgets[0][2] = new GLWidget(this, 2, 0);
+    glWidgets[0][3] = new GLWidget(this, 3, 0);
 
-    glWidgets[1][0] = new GLWidget(0, 4, 0);
-    glWidgets[1][1] = new GLWidget(0, 5, 0);
-    glWidgets[1][2] = new GLWidget(0, 6, 0);
-    glWidgets[1][3] = new GLWidget(0, 7, 0);
+    glWidgets[1][0] = new GLWidget(this, 4, 0);
+    glWidgets[1][1] = new GLWidget(this, 5, 0);
+    glWidgets[1][2] = new GLWidget(this, 6, 0);
+    glWidgets[1][3] = new GLWidget(this, 7, 0);
 
-    glWidgets[2][0] = new GLWidget(0, 8, 0);
-    glWidgets[2][1] = new GLWidget(0, 9, 0);
-    glWidgets[2][2] = new GLWidget(0, 10, 0);
-    glWidgets[2][3] = new GLWidget(0, 11, 0);
+    glWidgets[2][0] = new GLWidget(this, 8, 0);
+    glWidgets[2][1] = new GLWidget(this, 9, 0);
+    glWidgets[2][2] = new GLWidget(this, 10, 0);
+    glWidgets[2][3] = new GLWidget(this, 11, 0);
 
-    glWidgets[3][0] = new GLWidget(0, 12, 0);
-    glWidgets[3][1] = new GLWidget(0, 13, 0);
-    glWidgets[3][2] = new GLWidget(0, 14, 0);
-    glWidgets[3][3] = new GLWidget(0, 15, 0);
+    glWidgets[3][0] = new GLWidget(this, 12, 0);
+    glWidgets[3][1] = new GLWidget(this, 13, 0);
+    glWidgets[3][2] = new GLWidget(this, 14, 0);
+    glWidgets[3][3] = new GLWidget(this, 15, 0);
 
     mainLayout = new QGridLayout;
     mouseOn = mouse[0] = mouse[1] = false;
@@ -139,6 +139,30 @@ Window::Window()
     hot->start(1000);
 }
 
+int Window::getX() {
+    int t = wxyz[2];
+    wxyz[2] = 0;
+    return t;
+}
+
+int Window::getY() {
+    int t = wxyz[3];
+    wxyz[3] = 0;
+    return t;
+}
+
+int Window::getFire() {
+    int t = wxyz[1]&255;
+    wxyz[1] &= ~255;
+    return t;
+}
+
+int Window::getSpecial() {
+    int t = wxyz[1] >> 8;
+    wxyz[2] &= 255;
+    return t;
+}
+
 bool Window::eventFilter(QObject *object, QEvent *event)
  {
     if(!mouseOn || object != this) return false;
@@ -169,7 +193,7 @@ bool Window::eventFilter(QObject *object, QEvent *event)
 
 void Window::mouseFlip() {
     mouseOn = !mouseOn;
-    mouse[0] = mouse[1] = 0;
+    mouse[0] = mouse[1] = false;
 }
 
 void Window::hotPlug() {
@@ -228,12 +252,12 @@ void Window::keyHandleWP()
 
 void Window::keyHandleXM()
 {
-    keyHandle(1, -1);
+    keyHandle(1, 1);
 }
 
 void Window::keyHandleXP()
 {
-    keyHandle(1, 1);
+    keyHandle(1, 256);//special for space/enter key pair
 }
 
 void Window::keyHandleYM()

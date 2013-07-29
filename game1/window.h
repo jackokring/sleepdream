@@ -59,6 +59,10 @@ class Window : public QWidget
 public:
     Window();
     void shortcut(QKeySequence key, const char * execThis);
+    int getX();
+    int getY();
+    int getFire();
+    int getSpecial();
 
 private slots:
     void setCurrentGlWidget();

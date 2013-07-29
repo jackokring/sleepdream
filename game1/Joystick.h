@@ -53,6 +53,7 @@ private:
   QTimer * timer;
   EventJoystick eventJoy;
   long lastJoy[2];
+  bool joyBut[2];
   //int rdr(int m_fd, void *jev, unsigned int size);
   int (*rdrf)(int m_fd, void *jev, unsigned int size);
 

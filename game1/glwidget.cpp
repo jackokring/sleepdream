@@ -40,7 +40,6 @@
 
 #include <QtGui>
 #include <QtOpenGL>
-#include <QTextStream>
 
 #include "glwidget.h"
 #include "window.h"
@@ -48,8 +47,8 @@
 
 class Window;
 
-GLWidget::GLWidget(QWidget *parent, int idxi, QGLWidget *shareWidget)
-    : QGLWidget(parent, shareWidget)
+GLWidget::GLWidget(Window *parent, int idxi, QGLWidget *shareWidget)
+    : QGLWidget((QWidget *)parent, shareWidget)
 {
     name = idxi;
     clearColor = Qt::black;
@@ -58,6 +57,7 @@ GLWidget::GLWidget(QWidget *parent, int idxi, QGLWidget *shareWidget)
     zRot = 0;
     program = 0;
     playDo = false;
+    forInput = parent;//to get the input actions via public methods
 }
 
 GLWidget::~GLWidget()

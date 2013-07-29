@@ -44,6 +44,7 @@ Joystick::Joystick () : QObject()
   m_run = false;
 
   lastJoy[0] = lastJoy[1] = 0;
+  joyBut[0] = joyBut[1] = false;
 
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
@@ -69,9 +70,12 @@ int rdr(int m_fd, void *jev, unsigned int size) {
     case 1: je->value = (long)(QCursor::pos().y() * 65536) / (Joystick::mouseState->geometry().height())
                 - 32768; break;
 
-    default: je->type = JS_EVENT_BUTTON;
+    default: //if(!Joystick::mouseState->mouse[3-(Joystick::mouseCount&3)]) return 0;
+        //else emit //and reset
+        je->type = JS_EVENT_BUTTON;
         je->number = Joystick::mouseCount-1;
         je->value = Joystick::mouseState->mouse[3-(Joystick::mouseCount&3)];
+        //Joystick::mouseState->mouse[3-(Joystick::mouseCount&3)] = false;
         break;
     }
     Joystick::mouseCount++;
@@ -129,8 +133,10 @@ void Joystick::loop ()
         case JS_EVENT_BUTTON:
               switch(eventJoy.number) {
               case 0: if(eventJoy.value) emit keyHandleWP(); break;
-              case 1: if(eventJoy.value) emit keyHandleXP(); break;
-              case 2: if(eventJoy.value) emit keyHandleXM(); break;
+              case 1: //if(eventJoy.value) emit keyHandleXP(); break;
+                  joyBut[0] = eventJoy.value;
+              case 2: //if(eventJoy.value) emit keyHandleXM(); break;
+                  joyBut[1] = eventJoy.value;
               case 3: if(eventJoy.value) emit keyHandleWM(); break;
               default : break;
               }
@@ -152,4 +158,7 @@ void Joystick::loop ()
       default : break;
       }
   }
+  //arcade button latch
+  if(joyBut[0]) emit keyHandleXP();
+  if(joyBut[1]) emit keyHandleXM();
 }

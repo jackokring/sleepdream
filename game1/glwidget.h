@@ -43,6 +43,7 @@
 
 #include <QtGui>
 #include <QGLWidget>
+#include "window.h"
 
 class QGLShaderProgram;
 
@@ -51,7 +52,7 @@ class GLWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    GLWidget(QWidget *parent = 0, int idxi = 0, QGLWidget *shareWidget = 0);
+    GLWidget(Window *parent = 0, int idxi = 0, QGLWidget *shareWidget = 0);
     ~GLWidget();
 
     QSize minimumSizeHint() const;
@@ -61,6 +62,7 @@ public:
     void clickProxy();
     bool playDo;
     void play(bool tog);
+    Window *forInput;
 
 signals:
     void clicked();
