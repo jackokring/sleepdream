@@ -33,6 +33,12 @@ void Alsa::generate() {
     ready = true;//output it
 }
 
+int16_t *Alsa::setTimbre(int16_t *timbre) {
+    int16_t *tmp = buffer[1];
+    buffer[1] = timbre;
+    return tmp;
+}
+
 void Alsa::switcher(int osc) {
     for(int i = 0; i < 4; i++) {
         //descreet granular FM
@@ -167,7 +173,7 @@ Alsa::Alsa() : QObject() {
 
   initialize();
 
-  /* We want to loop for 5 seconds */
+  /* We want to loop for 5 seconds? */
   snd_pcm_hw_params_get_period_time(params,
                                     &val, &dir);
 
@@ -178,7 +184,7 @@ Alsa::Alsa() : QObject() {
   render = 0;
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
-  timer->start(10);//fast timer
+  timer->start(val / 2000);//fast timer
 }
 
 void Alsa::play(int frequency, int volume, int pattern, int16_t *timbre) {
