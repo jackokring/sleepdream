@@ -28,9 +28,18 @@ void Alsa::generate() {
         oscillate();
         hpf();
         filter();
-        buffer[i] = out;
+        buffer[render][i] = out;
     }
     ready = true;//output it
+}
+
+void Alsa::switcher(int osc) {
+    for(int i = 0; i < 4; i++) {
+        //descreet granular FM
+        DCO[osc][i] = *(masterP + i + DCO[osc][av]%(size / 4));
+        DCO[osc][i + 4] = *(masterP + i + DCO[osc][fv]%(size / 4));;
+    }
+    normalize();
 }
 
 void Alsa::oscillate() {
@@ -40,16 +49,20 @@ void Alsa::oscillate() {
         if(i) {
             fmod = amod = out; break;
         } else {
-            fmod = amod = DCO[1][3]; break;
+            fmod = amod = DCO[1][o]; break;
         }
-        fmod = exp[((fmod * DCO[i][4]) >> expScale) + 2048];
-        amod = exp[((amod * DCO[i][5]) >> expScale) + 2048];
+        fmod = exp[((fmod * DCO[i][fm]) >> expScale) + 2048];
+        amod = exp[((amod * DCO[i][am]) >> expScale) + 2048];
+        int16_t b4 = DCO[i][p];
 
-        DCO[i][3] = ( ((exp[(DCO[i][2] >> 4) + 2048] * amod) >> divScale) *
-                (DCO[i][0] -= exp[(DCO[i][1] >> 4) + 2048] + fmod))
+        DCO[i][p] -= exp[(DCO[i][f] >> 4) + 2048] + fmod;
+        if(b4 * DCO[i][p] < 0 && render == 0) switcher(i);
+
+        DCO[i][o] = ( ((exp[(DCO[i][a] >> 4) + 2048] * amod) >> divScale) *
+                DCO[i][p])
                 >> divScale;//pos move down saw
     }
-    out = DCO[0][3];
+    out = DCO[0][o];
 }
 
 void Alsa::hpf() {
@@ -66,21 +79,21 @@ void Alsa::filter() {
     int fmod = 0;
     int amod = 0;
     fmod = amod = DCO[2][3];
-    fmod = exp[((fmod * DCO[3][4]) >> expScale) + 2048];
-    amod = exp[((amod * DCO[3][5]) >> expScale) + 2048];
+    fmod = exp[((fmod * DCO[3][fm]) >> expScale) + 2048];
+    amod = exp[((amod * DCO[3][am]) >> expScale) + 2048];
 
 
-    f = fmod + exp[(DCO[3][1] >> 4) + 2048];
-    if(f < 0) f = 0;
-    if(f > 65535) f = 65535;
-    f = sin[f >> 4];
-    q = amod + exp[(DCO[3][2] >> 4) + 2048];
+    ff = fmod + exp[(DCO[3][f] >> 4) + 2048];
+    if(ff < 0) ff = 0;
+    if(ff > 65535) ff = 65535;
+    ff = sin[ff >> 4];
+    q = amod + exp[(DCO[3][a] >> 4) + 2048];
     if(q < 0) q = 0;//it's inverse q actually!!
     if(q > 65536 * 3 / 2) q = 65536 * 3 / 2;
     q = (65536 * 3 / 2 - q) << 1;
-    e2 = e2 + ((f * e1) >> divScale);
+    e2 = e2 + ((ff * e1) >> divScale);
     h = out - e2 - ((q * e1) >> divScale);
-    b = ((f * h) >> divScale) + e1;
+    b = ((ff * h) >> divScale) + e1;
     e1 = b;
     out = e2;
 }
@@ -89,13 +102,13 @@ void Alsa::makePow() {
     //frequency scaling
     for(int i = 0; i < 4096; i++) {
         //a four octave range plus or minus
-        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 4 / 2048.0 ) * 100);
+        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 4 / 2048.0 ) * 400);
     }
     double f;
     for(int i = 0; i < 4096; i++) {
         f = (441.0 * exp[i]);
         //filter mapping of note to play
-        sin[i] = (int16_t) (2 * qSin(3.141592658 * f/44100));
+        sin[i] = (int16_t) (qSin(3.141592658 * f/44100) * 32768);
     }
 }
 
@@ -148,16 +161,11 @@ Alsa::Alsa() : QObject() {
   snd_pcm_hw_params_get_period_size(params, &frames,
                                     &dir);
   size = frames; /* 2 bytes/sample, 2 channels */
-  buffer = (int16_t *) malloc(size);
+  buffer[0] = (int16_t *) malloc(size);
+  buffer[1] = (int16_t *) malloc(size);
   for(int i = 0; i < size; i++) buffer[i] = 0;
 
-  for(int i = 0; i < NumDCO; i++) {
-      DCO[i][0] = 32768;//pos
-      DCO[i][1] = 0;//freq
-      DCO[i][2] = 0;//amp
-      DCO[i][4] = 0;//freqm
-      DCO[i][5] = 0;//ampm
-  }
+  initialize();
 
   /* We want to loop for 5 seconds */
   snd_pcm_hw_params_get_period_time(params,
@@ -165,14 +173,49 @@ Alsa::Alsa() : QObject() {
 
   out = 0;
   ready = true;
+  render = 1;
+  generate();
+  render = 0;
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
   timer->start(10);//fast timer
 }
 
+void Alsa::play(int frequency, int volume, int pattern, int16_t *timbre) {
+    masterF = frequency;
+    masterA = volume;
+    if(timbre) masterP = timbre;
+    else masterP = buffer[1];//timbre buffer
+    masterI = pattern%(size / 4);
+    for(int i = 0; i < NumDCO * 8; i++) {
+        *((int16_t *)DCO + i) = *(timbre + i + masterI);//initial note data
+    }
+    normalize();
+}
+
+void Alsa::normalize() {
+    for(int i = 0; i < NumDCO; i++) {
+        DCO[i][f] += masterF;//freq
+        DCO[i][a] += masterA;//amp
+    }
+}
+
+void Alsa::initialize() {
+    for(int i = 0; i < NumDCO; i++) {
+        DCO[i][p] = 32768;//pos
+        DCO[i][f] = 0;//freq
+        DCO[i][a] = 0;//amp
+        DCO[i][fm] = 0;//freqm
+        DCO[i][am] = 0;//ampm
+        DCO[i][fv] = 0;
+        DCO[i][av] = 0;
+    }
+}
+
 void Alsa::loop() {
+    int rtmp = render;
     if(ready) {
-        rc = snd_pcm_writei(handle, buffer, frames);
+        rc = snd_pcm_writei(handle, buffer[render = 0], frames);
         if (rc == -EPIPE) { /* -EAGAIN processing needed for not ready !!!! */
           /* EPIPE means underrun */
           snd_pcm_prepare(handle);
@@ -180,12 +223,14 @@ void Alsa::loop() {
         if (rc != -EAGAIN) ready = false;
     }
     if(!ready) generate();
+    render = rtmp;
 }
 
 Alsa::~Alsa() {
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
-  free(buffer);
+  free(buffer[1]);
+  free(buffer[0]);
 }
 
 
