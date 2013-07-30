@@ -1,3 +1,8 @@
+/*  The dynamic Alsa granular FM synth class.
+    Developped from an ALSA demo application from a computer magazine.
+    Adaptation (C)2013 Sleep Dream Games.
+
+    */
 #ifndef ALSA_H
 #define ALSA_H
 
