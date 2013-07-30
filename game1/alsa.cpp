@@ -179,12 +179,16 @@ Alsa::Alsa() : QObject() {
 
   out = 0;
   ready = true;
-  render = 1;
-  generate();
-  render = 0;
+  mutate();
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(loop()));
   timer->start(val / 2000);//fast timer
+}
+
+void Alsa::mutate() {
+    render = 1;
+    generate();
+    render = 0;
 }
 
 void Alsa::play(int frequency, int volume, int pattern, int16_t *timbre) {

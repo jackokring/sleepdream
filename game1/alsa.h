@@ -73,6 +73,7 @@ public:
     void play(int frequency = 0, int volume = 0, int pattern = 0, int16_t *timbre = NULL);
     //evolver handling
     int16_t *setTimbre(int16_t *timbre);
+    void mutate();
 };
 
 #endif // ALSA_H
