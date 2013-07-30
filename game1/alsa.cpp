@@ -30,7 +30,7 @@ void Alsa::generate() {
         filter();
         buffer[render][i] = out;
     }
-    ready = true;//output it
+    if(render == 0) ready = true;//output it
 }
 
 int16_t *Alsa::setTimbre(int16_t *timbre) {
