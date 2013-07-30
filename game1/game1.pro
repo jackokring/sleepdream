@@ -6,11 +6,14 @@ SOURCES       = glwidget.cpp \
                 main.cpp \
                 window.cpp \
     Joystick.cpp \
-    alsa.cpp
+    alsa.cpp \
+    icelib.cpp
 RESOURCES     = game1.qrc
 QT           += opengl core gui webkitwidgets
 DEFINES += HAS_ALSA
 LIBS_PRIVATE += -lasound -lc
+
+#-licecore -licebridge
 
 OTHER_FILES += \
     docs.html \

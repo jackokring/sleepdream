@@ -1,3 +1,5 @@
+#ifdef LINUX_ICE
+
 #include <iostream>
 #include <icelib/icebridge.h>
 #include <icelib/icecore.h>
@@ -17,6 +19,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
+
 static volatile bool g_waitingToStart = false;
 
  void OnStarted(const iceEvent* pEvent, const void* eventArgs, void* userContext)
@@ -29,7 +32,7 @@ void OnStopped(const iceEvent* pEvent, const void* eventArgs, void* userContext)
 	 g_waitingToStart = false;
  }
 
-int main(int argc, char** argv)
+int main_named(int argc, char** argv)
 {
 	cout << "hello world\n";
 
@@ -173,3 +176,4 @@ int main(int argc, char** argv)
 }
 
 
+#endif
