@@ -14,9 +14,19 @@
    filter stability point, and the lowest based on an octive divider toward
    zero frequency.
 
-   Sequencing control is via indexes to groups of 16, or other commands, such
-   as delay, or relative 16, for music perhaps. This will produce enough
-   arcade sounds.
+   Each oscillator/filter slot has 8 parameters controlled by indexing a
+   timbre buffer. The timbre buffer is indexed to the next position on zero
+   crossing to make a granular FM synth. The timbre buffer can be filled
+   with sound, to make a random-ish mutate. The granularity is switched off
+   when mutating the timbre. (maybe not needed later optimization).
+
+   General note playing can set a tone Hz, and the volume also controls
+   some of the tonal character too. LFO effects can be via long chains in
+   the timbre. They are note dependant in rate though.
+
+   This will produce enough arcade sounds.
+
+   Later intended arrangements will have a few of the tracker usuals.
 */
 
 #include "alsa.h"
