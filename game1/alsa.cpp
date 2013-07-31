@@ -169,7 +169,8 @@ Alsa::Alsa() : QObject() {
   size = frames; /* 2 bytes/sample, 2 channels */
   buffer[0] = (int16_t *) malloc(size);
   buffer[1] = (int16_t *) malloc(size);
-  for(int i = 0; i < size; i++) buffer[i] = 0;
+  for(int j = 0; j < 2; j++)
+    for(int i = 0; i < size; i++) buffer[j][i] = 0;
 
   initialize();
 
