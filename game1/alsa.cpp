@@ -10,7 +10,7 @@
 
    Each DCO and DCF has an input which is a modulation. This is directed
    to the amplitude or Q, and the frequency. Both the amplitude/Q and freq
-   are exponetial mapped, with the highest frequency being just under the
+   are exponetial mapped, with the highest frequency being just over the
    filter stability point, and the lowest based on an octive divider toward
    zero frequency.
 
@@ -38,6 +38,8 @@ void Alsa::generate() {
         oscillate();
         hpf();
         filter();
+        if(out > 32767) out = 32767;//clip
+        if(out < -32767) out = -32767;
         buffer[render][i] = out;
     }
     if(render == 0) ready = true;//output it
@@ -67,16 +69,16 @@ void Alsa::oscillate() {
         } else {
             fmod = amod = DCO[1][o]; break;
         }
-        fmod = exp[((fmod * DCO[i][fm]) >> expScale) + 2048];
-        amod = exp[((amod * DCO[i][am]) >> expScale) + 2048];
+        fmod = exp[(((fmod * DCO[i][fm]) >> expScale) & 2047) + 2048];
+        amod = exp[(((amod * DCO[i][am]) >> expScale) & 2047) + 2048];
         int16_t b4 = DCO[i][p];
 
-        DCO[i][p] -= exp[(DCO[i][f] >> 4) + 2048] + fmod;
+        DCO[i][p] -= exp[((DCO[i][f] >> 4) & 2047) + 2048] + fmod;
         if(b4 * DCO[i][p] < 0 && render == 0) switcher(i);
 
-        DCO[i][o] = ( ((exp[(DCO[i][a] >> 4) + 2048] * amod) >> divScale) *
-                DCO[i][p])
-                >> divScale;//pos move down saw
+        //amplitude scaling is different because max is about 23*120
+        DCO[i][o] = ( ((exp[((DCO[i][a] >> 4) & 2047) + 2048] * amod) >> ampScale) *
+                DCO[i][p]) >> divScale;//pos move down saw
     }
     out = DCO[0][o];
 }
@@ -95,18 +97,17 @@ void Alsa::filter() {
     int fmod = 0;
     int amod = 0;
     fmod = amod = DCO[2][3];
-    fmod = exp[((fmod * DCO[3][fm]) >> expScale) + 2048];
-    amod = exp[((amod * DCO[3][am]) >> expScale) + 2048];
+    fmod = exp[(((fmod * DCO[3][fm]) >> expScale) & 2047) + 2048];
+    amod = exp[(((amod * DCO[3][am]) >> expScale) & 2047) + 2048];
 
 
-    ff = fmod + exp[(DCO[3][f] >> 4) + 2048];
+    ff = fmod + exp[((DCO[3][f] >> 4) & 2047) + 2048];
     if(ff < 0) ff = 0;
-    if(ff > 65535) ff = 65535;
-    ff = sin[ff >> 4];
-    q = amod + exp[(DCO[3][a] >> 4) + 2048];
-    if(q < 0) q = 0;//it's inverse q actually!!
-    if(q > 65536 * 3 / 2) q = 65536 * 3 / 2;
-    q = (65536 * 3 / 2 - q) << 1;
+    if(ff > 4095) ff = 4095;
+    ff = sin[ff];
+    q = amod * exp[((DCO[3][a] >> 4) & 2047) + 2048] >> ampScale;
+    //it's inverse q actually!!
+    q = 32767 / q;
     e2 = e2 + ((ff * e1) >> divScale);
     h = out - e2 - ((q * e1) >> divScale);
     b = ((ff * h) >> divScale) + e1;
@@ -117,14 +118,18 @@ void Alsa::filter() {
 void Alsa::makePow() {
     //frequency scaling
     for(int i = 0; i < 4096; i++) {
-        //a four octave range plus or minus
-        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 4 / 2048.0 ) * 400);
+        //a four octave range plus or minus (9 and a little octaves)
+        //1800 picked for 60*60 harmonic matching!
+        //tunes center 367.5Hz
+        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 3 / 1800.0 ) * 120);
     }
     double f;
     for(int i = 0; i < 4096; i++) {
-        f = (441.0 * exp[i]);
+        f = (367.5 * exp[i] / 120);
         //filter mapping of note to play
-        sin[i] = (int16_t) (qSin(3.141592658 * f/44100) * 32768);
+        //some of the high notes may have a negative number
+        sin[i] = (int16_t) (qSin(3.141592658 * f/44100) * 65536);
+        if(sin[i] < 0) sin[i] = 32767;//limit
     }
 }
 
@@ -222,14 +227,15 @@ void Alsa::normalize() {
 }
 
 void Alsa::initialize() {
-    for(int i = 0; i < NumDCO; i++) {
-        DCO[i][p] = 32768;//pos
+    for(int i = 0; i < NumDCO * 8; i++) {
+        *(DCO + i) = 0;
+        /* DCO[i][p] = 0;//pos
         DCO[i][f] = 0;//freq
         DCO[i][a] = 0;//amp
         DCO[i][fm] = 0;//freqm
         DCO[i][am] = 0;//ampm
         DCO[i][fv] = 0;
-        DCO[i][av] = 0;
+        DCO[i][av] = 0; */
     }
 }
 

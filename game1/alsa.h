@@ -33,8 +33,9 @@ private:
     int16_t sin[4096];//sine curve
     enum { NumDCO = 3 };
     int16_t DCO[NumDCO + 1][8];//and VCF fake
-    enum {divScale = 16};
-    enum {expScale = 16 + 4};
+    enum {divScale = 15};//signed and 15
+    enum {ampScale = 8};
+    enum {expScale = divScale + 4};//to signed and 11 bit
     int l, b, d2, d1;
     int e2, e1;
     int q, ff, h;
