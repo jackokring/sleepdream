@@ -32,6 +32,7 @@
 #include "alsa.h"
 #include <alsa/asoundlib.h>
 #include <QtMath>
+#include <QtGlobal>
 
 void Alsa::generate() {
     for(int i = 0; i < size; i++) {
@@ -73,7 +74,10 @@ void Alsa::oscillate() {
         amod = (amod * DCO[i][am]) >> divScale;
         int16_t b4 = DCO[i][p];
 
-        DCO[i][p] -= exp[((DCO[i][f] >> 4) & 2047) + 2048] / 3;
+        DCO[i][p] += exp[((DCO[i][f] >> 4) & 2047) + 2048];
+        if(qrand() % 3600 < low[((DCO[i][f] >> 4) & 2047) + 2048])
+            DCO[i][p] ++;
+
         if(b4 * DCO[i][p] < 0 && render == 0) switcher(i);
 
         DCO[i][o] = DCO[i][p] + fmod;//PM not FM, as easier
@@ -120,16 +124,17 @@ void Alsa::filter() {
 
 void Alsa::makePow() {
     //frequency scaling
+    double f;
     for(int i = 0; i < 4096; i++) {
         //a four octave range plus or minus (9 and a little octaves)
         //1800 picked for 60*60 harmonic matching!
         //tunes center 367.5Hz
-        //the later 3 gets 4 times the tuning accuracy
-        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 3 / 1800.0 ) * 120 * 3);
+        //the later times the tuning accuracy
+        exp[i] = (int16_t) (f = qPow(2, (i - (2048)) * 3 / 1800.0 ) * 120);
+        low[i] = (int16_t) ((f - exp[i]) * 3600);
     }
-    double f;
     for(int i = 0; i < 4096; i++) {
-        f = (367.5 * exp[i] / 120 * 3);
+        f = (367.5 * exp[i] / 120);
         //filter mapping of note to play
         //some of the high notes may have a negative number
         sin[i] = (int16_t) (qSin(3.141592658 * f/44100) * 65536);

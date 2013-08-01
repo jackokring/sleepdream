@@ -31,6 +31,7 @@ private:
     void normalize();
     int16_t exp[4096];//exponential curve
     int16_t sin[4096];//sine curve
+    int16_t low[4096];//not accuracy
     enum { NumDCO = 3 };
     int16_t DCO[NumDCO + 1][8];//and VCF fake
     enum {divScale = 15};//signed and 15
