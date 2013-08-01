@@ -10,7 +10,7 @@
 
    Each DCO and DCF has an input which is a modulation. This is directed
    to the amplitude or Q, and the frequency. Both the amplitude/Q and freq
-   are exponetial mapped, with the highest frequency being just over the
+   are !exponetial mapped, with the highest frequency being just over the
    filter stability point, and the lowest based on an octive divider toward
    zero frequency.
 
@@ -69,15 +69,15 @@ void Alsa::oscillate() {
         } else {
             fmod = amod = DCO[1][o]; break;
         }
-        fmod = exp[(((fmod * DCO[i][fm]) >> expScale) & 2047) + 2048];
-        amod = exp[(((amod * DCO[i][am]) >> expScale) & 2047) + 2048];
+        fmod = (fmod * DCO[i][fm]) >> divScale;
+        amod = (amod * DCO[i][am]) >> divScale;
         int16_t b4 = DCO[i][p];
 
         DCO[i][p] -= exp[((DCO[i][f] >> 4) & 2047) + 2048] + fmod;
         if(b4 * DCO[i][p] < 0 && render == 0) switcher(i);
 
-        //amplitude scaling is different because max is about 23*120
-        DCO[i][o] = ( ((exp[((DCO[i][a] >> 4) & 2047) + 2048] * amod) >> ampScale) *
+        //amplitude scaling
+        DCO[i][o] = ( ((DCO[i][a] * amod) >> divScale) *
                 DCO[i][p]) >> divScale;//pos move down saw
     }
     out = DCO[0][o];
@@ -97,17 +97,17 @@ void Alsa::filter() {
     int fmod = 0;
     int amod = 0;
     fmod = amod = DCO[2][3];
-    fmod = exp[(((fmod * DCO[3][fm]) >> expScale) & 2047) + 2048];
-    amod = exp[(((amod * DCO[3][am]) >> expScale) & 2047) + 2048];
+    fmod = (fmod * DCO[3][fm]) >> divScale;
+    amod = (amod * DCO[3][am]) >> divScale;
 
-
-    ff = fmod + exp[((DCO[3][f] >> 4) & 2047) + 2048];
+    ff = (DCO[3][f] + fmod) >> 4;
     if(ff < 0) ff = 0;
     if(ff > 4095) ff = 4095;
     ff = sin[ff];
-    q = amod * exp[((DCO[3][a] >> 4) & 2047) + 2048] >> ampScale;
+    q = amod * DCO[3][a] >> divScale;
     //it's inverse q actually!!
-    q = 32767 / q;
+    q = (q * q) >> divScale;//normalize positive
+    q = 32767 / (q + 1);
     e2 = e2 + ((ff * e1) >> divScale);
     h = out - e2 - ((q * e1) >> divScale);
     b = ((ff * h) >> divScale) + e1;
@@ -213,21 +213,21 @@ void Alsa::play(int frequency, int volume, int pattern, int16_t *timbre) {
     if(timbre) masterP = timbre;
     else masterP = buffer[1];//timbre buffer
     masterI = pattern%(size / 4);
-    for(int i = 0; i < NumDCO * 8; i++) {
+    for(int i = 0; i < (NumDCO +1) * 8; i++) {
         *((int16_t *)DCO + i) = *(timbre + i + masterI);//initial note data
     }
     normalize();
 }
 
 void Alsa::normalize() {
-    for(int i = 0; i < NumDCO; i++) {
+    for(int i = 0; i < NumDCO + 1; i++) {
         DCO[i][f] += masterF;//freq
         DCO[i][a] += masterA;//amp
     }
 }
 
 void Alsa::initialize() {
-    for(int i = 0; i < NumDCO * 8; i++) {
+    for(int i = 0; i < (NumDCO + 1) * 8; i++) {
         *(DCO + i) = 0;
         /* DCO[i][p] = 0;//pos
         DCO[i][f] = 0;//freq
