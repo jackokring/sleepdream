@@ -73,12 +73,15 @@ void Alsa::oscillate() {
         amod = (amod * DCO[i][am]) >> divScale;
         int16_t b4 = DCO[i][p];
 
-        DCO[i][p] -= exp[((DCO[i][f] >> 4) & 2047) + 2048] + fmod;
+        DCO[i][p] -= exp[((DCO[i][f] >> 4) & 2047) + 2048] / 3;
         if(b4 * DCO[i][p] < 0 && render == 0) switcher(i);
 
+        DCO[i][o] = DCO[i][p] + fmod;//PM not FM, as easier
+        //basically the index of modulation is easier
+        //to control DC too
         //amplitude scaling
         DCO[i][o] = ( ((DCO[i][a] * amod) >> divScale) *
-                DCO[i][p]) >> divScale;//pos move down saw
+                DCO[i][o]) >> divScale;//pos move down saw
     }
     out = DCO[0][o];
 }
@@ -121,11 +124,12 @@ void Alsa::makePow() {
         //a four octave range plus or minus (9 and a little octaves)
         //1800 picked for 60*60 harmonic matching!
         //tunes center 367.5Hz
-        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 3 / 1800.0 ) * 120);
+        //the later 3 gets 4 times the tuning accuracy
+        exp[i] = (int16_t) (qPow(2, (i - (2048)) * 3 / 1800.0 ) * 120 * 3);
     }
     double f;
     for(int i = 0; i < 4096; i++) {
-        f = (367.5 * exp[i] / 120);
+        f = (367.5 * exp[i] / 120 * 3);
         //filter mapping of note to play
         //some of the high notes may have a negative number
         sin[i] = (int16_t) (qSin(3.141592658 * f/44100) * 65536);
