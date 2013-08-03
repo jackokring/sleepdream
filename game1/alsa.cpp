@@ -160,8 +160,7 @@ Alsa::Alsa() : QObject() {
   snd_pcm_hw_params_any(handle, params);
 
   /* Interleaved mode NO ... MONO */
-  //snd_pcm_hw_params_set_access(handle, params,
-  //                    SND_PCM_ACCESS_RW_INTERLEAVED);
+  snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_NONINTERLEAVED);
 
   /* Signed 16-bit little-endian format */
   snd_pcm_hw_params_set_format(handle, params,
@@ -251,12 +250,12 @@ void Alsa::initialize() {
 void Alsa::loop() {
     int rtmp = render;
     if(ready) {
-        rc = snd_pcm_writei(handle, buffer[render = 0], frames);
+        rc = snd_pcm_write(handle, buffer[render = 0], frames);
         if (rc == -EPIPE) { /* -EAGAIN processing needed for not ready !!!! */
           /* EPIPE means underrun */
           snd_pcm_prepare(handle);
         }
-        if (rc != -EAGAIN) ready = false;
+        if (rc != -EBUSY) ready = false;
     }
     if(!ready) generate();
     render = rtmp;
