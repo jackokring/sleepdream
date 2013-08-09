@@ -34,11 +34,15 @@ private:
     int16_t low[4096];//not accuracy
     enum { NumDCO = 3 };
     int16_t DCO[NumDCO + 1][8];//and VCF fake
+    int16_t DCO_O[NumDCO + 1];//outputs
+    int16_t DCO_L[NumDCO + 1];//lfo counters
+    int16_t DCO_P[NumDCO + 1];//phases
     enum {divScale = 15};//signed and 15
     enum {expScale = divScale + 4};//to signed and 11 bit
     int l, b, d2, d1;
     int e2, e1;
     int q, ff, h;
+    int16_t olda[NumDCO + 1];
     void makePow();
     void generate();
 
@@ -62,12 +66,12 @@ private:
 
     enum {
         //amp
-        o = 0,
+        ip = 0,
         a = 1,
         am = 2,
         av = 3,
         //freq
-        p = 4,
+        l = 4,
         f = 5,
         fm = 6,
         fv = 7

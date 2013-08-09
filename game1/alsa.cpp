@@ -53,11 +53,16 @@ int16_t *Alsa::setTimbre(int16_t *timbre) {
 }
 
 void Alsa::switcher(int osc) {
+    if(DCO_L[osc]-- != 0) return;
+    *(masterP + ip + olda[osc]%(size / 4)) = DCO_P[osc];
+    olda[osc] = DCO[osc][av];
     for(int i = 0; i < 4; i++) {
         //descreet granular FM
         DCO[osc][i] = *(masterP + i + DCO[osc][av]%(size / 4));
         DCO[osc][i + 4] = *(masterP + i + DCO[osc][fv]%(size / 4));;
     }
+    //restore instantanious phase for sychronization
+    DCO_P[osc] = DCO[osc][ip];
     normalize();
 }
 
@@ -68,26 +73,27 @@ void Alsa::oscillate() {
         if(i) {
             fmod = amod = out; break;
         } else {
-            fmod = amod = DCO[1][o]; break;
+            fmod = amod = DCO_O[1]; break;
         }
         fmod = (fmod * DCO[i][fm]) >> divScale;
         amod = (amod * DCO[i][am]) >> divScale;
-        int16_t b4 = DCO[i][p];
+        int16_t b4 = DCO_P[i];
+        int16_t mf = DCO[i][f] + masterF;
 
-        DCO[i][p] += exp[((DCO[i][f] >> 4) & 2047) + 2048];
-        if(qrand() % 3600 < low[((DCO[i][f] >> 4) & 2047) + 2048])
-            DCO[i][p] ++;
+        DCO_P[i] += exp[((mf >> 4) & 2047) + 2048];
+        if(qrand() % 3600 < low[((mf >> 4) & 2047) + 2048])
+            DCO_P[i] ++;
 
-        if(b4 * DCO[i][p] < 0 && render == 0) switcher(i);
+        if(b4 * DCO_P[i] < 0 && render == 0) switcher(i);
 
-        DCO[i][o] = DCO[i][p] + fmod;//PM not FM, as easier
+        DCO_O[i] = DCO_P[i] + fmod;//PM not FM, as easier
         //basically the index of modulation is easier
         //to control DC too
         //amplitude scaling
-        DCO[i][o] = ( ((DCO[i][a] * amod) >> divScale) *
-                DCO[i][o]) >> divScale;//pos move down saw
+        DCO_O[i] = ( (((DCO[i][a] + masterA) * amod) >> divScale) *
+                DCO_O[i]) >> divScale;//pos move down saw
     }
-    out = DCO[0][o];
+    out = DCO_O[0];
 }
 
 void Alsa::hpf() {
@@ -107,11 +113,11 @@ void Alsa::filter() {
     fmod = (fmod * DCO[3][fm]) >> divScale;
     amod = (amod * DCO[3][am]) >> divScale;
 
-    ff = (DCO[3][f] + fmod) >> 4;
+    ff = (DCO[3][f] + fmod + masterF) >> 4;
     if(ff < 0) ff = 0;
     if(ff > 4095) ff = 4095;
     ff = sin[ff];
-    q = amod * DCO[3][a] >> divScale;
+    q = amod * (DCO[3][a] + masterA) >> divScale;
     //it's inverse q actually!!
     q = (q * q) >> divScale;//normalize positive
     q = 32767 / (q + 1);
@@ -221,23 +227,25 @@ void Alsa::play(int frequency, int volume, int pattern, int16_t *timbre) {
     if(timbre) masterP = timbre;
     else masterP = buffer[1];//timbre buffer
     masterI = pattern%(size / 4);
-    for(int i = 0; i < (NumDCO +1) * 8; i++) {
+    for(int i = 0; i < (NumDCO + 1) * 8; i++) {
         *((int16_t *)DCO + i) = *(timbre + i + masterI);//initial note data
+    }
+    for(int i = 0; i < (NumDCO + 1); i++) {
+        olda[i] = DCO[i][av];
     }
     normalize();
 }
 
 void Alsa::normalize() {
     for(int i = 0; i < NumDCO + 1; i++) {
-        DCO[i][f] += masterF;//freq
-        DCO[i][a] += masterA;//amp
+        DCO_L[i] = DCO[i][l];//set LFO counter
     }
 }
 
 void Alsa::initialize() {
     for(int i = 0; i < (NumDCO + 1) * 8; i++) {
         *(DCO + i) = 0;
-        /* DCO[i][p] = 0;//pos
+        /*
         DCO[i][f] = 0;//freq
         DCO[i][a] = 0;//amp
         DCO[i][fm] = 0;//freqm
